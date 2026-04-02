@@ -1,0 +1,12 @@
+.DS_Store
+.m2/
+
+backend/target/
+frontend/dist/
+frontend/node_modules/
+
+.env
+.env.*
+!.env.example
+
+cursor_full_prompt.md
