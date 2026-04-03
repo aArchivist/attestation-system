@@ -1,21 +1,24 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:mariadb://localhost:3306/attestation_db?useUnicode=true&characterEncoding=UTF-8}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/attestation_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 1
+      minimum-idle: 0
+      idle-timeout: 10000
+      max-lifetime: 30000
+      validation-timeout: 5000
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MariaDBDialect
   flyway:
     enabled: false
     locations: classpath:db/migration
 
 jwt:
-  secret: ${JWT_SECRET:Q0hBTkdFX01FX0pXVF9TRUNSRVRfRk9SX0xPQ0FMX0RFVl9PTkxZX18xMjM0NTY3ODkw}
+  secret: ${JWT_SECRET:your_generated_jwt_secret}
   expiration: 86400000
 
 springdoc:
