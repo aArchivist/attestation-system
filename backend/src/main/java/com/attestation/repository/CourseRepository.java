@@ -11,6 +11,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     List<Course> findByTeacherId(Long teacherId);
     List<Course> findByTeacherIdOrderByIssueDateDesc(Long teacherId);
     List<Course> findByConfirmedFalseOrderByCreatedAtDesc();
+    boolean existsByTeacherId(Long teacherId);
 
     @Query("""
         SELECT COALESCE(SUM(c.hours), 0) FROM Course c

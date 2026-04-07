@@ -5,7 +5,7 @@ export default function HoursCounter({ confirmed = 0, total = 0, required = 150 
     <section className="panel hours-panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Навчальне навантаження</p>
+          <p className="eyebrow">Наявні години підвищення кваліфікації</p>
           <h3>Підтверджені години для звіту</h3>
         </div>
         <div className="hours-meta">

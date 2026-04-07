@@ -12,7 +12,6 @@ import com.attestation.repository.TeacherRepository;
 import com.attestation.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,8 @@ public class CourseService {
     private final CourseCategoryRepository categoryRepository;
     private final UserRepository userRepository;
 
-    private static final BigDecimal HOURS_PER_ECTS = BigDecimal.valueOf(30);
+    private static final BigDecimal HOURS_PER_CREDIT_STEP = BigDecimal.valueOf(3);
+    private static final BigDecimal CREDIT_STEP = BigDecimal.valueOf(0.1);
 
     public CourseResponseDTO addCourse(CourseDTO dto, Long teacherId) {
         Teacher teacher = teacherRepository.findById(teacherId)
@@ -93,7 +93,9 @@ public class CourseService {
 
     private BigDecimal calculateEcts(Integer hours) {
         return BigDecimal.valueOf(hours)
-            .divide(HOURS_PER_ECTS, 1, RoundingMode.HALF_UP);
+            .divideToIntegralValue(HOURS_PER_CREDIT_STEP)
+            .multiply(CREDIT_STEP)
+            .setScale(1);
     }
 
     private CourseResponseDTO toResponseDTO(Course course) {

@@ -215,6 +215,11 @@ textarea {
   margin-right: 8px;
 }
 
+.action-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
 .danger-link:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -270,6 +275,11 @@ textarea {
 
 .form-error {
   color: #b42318;
+  font-weight: 700;
+}
+
+.form-success {
+  color: #157347;
   font-weight: 700;
 }
 

@@ -6,7 +6,7 @@ function calculateEcts(hoursValue) {
   if (!Number.isFinite(hours) || hours <= 0) {
     return '';
   }
-  return (Math.round((hours / 30) * 10) / 10).toFixed(1);
+  return (Math.floor(hours / 3) / 10).toFixed(1);
 }
 
 const initialState = {

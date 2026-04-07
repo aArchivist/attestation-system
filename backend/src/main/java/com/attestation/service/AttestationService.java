@@ -27,8 +27,11 @@ public class AttestationService {
         return TeacherSummaryDTO.builder()
             .id(teacher.getId())
             .fullName(teacher.getFullName())
+            .categoryId(teacher.getCategory().getId())
             .categoryName(teacher.getCategory().getName())
+            .positionId(teacher.getPosition().getId())
             .positionName(teacher.getPosition().getName())
+            .pedagogicalTitle(teacher.getPedagogicalTitle())
             .lastAttestationDate(teacher.getLastAttestationDate())
             .nextAttestationDate(teacher.getNextAttestationDate())
             .confirmedHours(confirmed)
@@ -36,6 +39,9 @@ public class AttestationService {
             .requiredHours(REQUIRED_HOURS)
             .deadlineStatus(teacher.getDeadlineStatus())
             .attestationNote(teacher.getAttestationNote())
+            .disciplines(teacher.getDisciplines().stream()
+                .map(discipline -> discipline.getDiscipline())
+                .toList())
             .build();
     }
 

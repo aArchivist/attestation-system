@@ -1,5 +1,6 @@
 package com.attestation.service;
 
+import com.attestation.dto.UpdateUserRequest;
 import com.attestation.model.Role;
 import com.attestation.model.Teacher;
 import com.attestation.model.User;
@@ -25,9 +26,7 @@ public class AdminService {
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Логін вже існує: " + username);
         }
-        if (role == Role.TEACHER && teacherId == null) {
-            throw new IllegalArgumentException("Для користувача з роллю TEACHER потрібно обрати викладача");
-        }
+        validateTeacherBinding(role, teacherId, null);
 
         User user = User.builder()
             .username(username)
@@ -37,11 +36,24 @@ public class AdminService {
             .build();
 
         if (teacherId != null) {
-            Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new EntityNotFoundException("Викладача не знайдено"));
-            user.setTeacher(teacher);
+            user.setTeacher(findTeacher(teacherId));
         }
 
+        return userRepository.save(user);
+    }
+
+    public User updateUser(Long userId, UpdateUserRequest request) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("Користувача не знайдено"));
+
+        if (userRepository.existsByUsernameAndIdNot(request.getUsername(), userId)) {
+            throw new IllegalArgumentException("Логін вже існує: " + request.getUsername());
+        }
+        validateTeacherBinding(request.getRole(), request.getTeacherId(), userId);
+
+        user.setUsername(request.getUsername());
+        user.setRole(request.getRole());
+        user.setTeacher(request.getTeacherId() != null ? findTeacher(request.getTeacherId()) : null);
         return userRepository.save(user);
     }
 
@@ -62,5 +74,32 @@ public class AdminService {
             .orElseThrow(() -> new EntityNotFoundException("Користувача не знайдено"));
         user.setActive(!user.isActive());
         userRepository.save(user);
+    }
+
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("Користувача не знайдено"));
+        userRepository.delete(user);
+    }
+
+    private void validateTeacherBinding(Role role, Long teacherId, Long userId) {
+        if (role == Role.TEACHER && teacherId == null) {
+            throw new IllegalArgumentException("Для користувача з роллю TEACHER потрібно обрати викладача");
+        }
+        if (teacherId == null) {
+            return;
+        }
+
+        boolean teacherAlreadyLinked = userId == null
+            ? userRepository.existsByTeacherId(teacherId)
+            : userRepository.existsByTeacherIdAndIdNot(teacherId, userId);
+        if (teacherAlreadyLinked) {
+            throw new IllegalArgumentException("Цей викладач уже прив'язаний до іншого користувача");
+        }
+    }
+
+    private Teacher findTeacher(Long teacherId) {
+        return teacherRepository.findById(teacherId)
+            .orElseThrow(() -> new EntityNotFoundException("Викладача не знайдено"));
     }
 }

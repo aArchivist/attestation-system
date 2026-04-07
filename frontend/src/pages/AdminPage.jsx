@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 
@@ -19,15 +19,43 @@ const emptyUser = {
   teacherId: '',
 };
 
+function toTeacherForm(teacher) {
+  return {
+    fullName: teacher.fullName ?? '',
+    positionId: teacher.positionId ? String(teacher.positionId) : '',
+    categoryId: teacher.categoryId ? String(teacher.categoryId) : '',
+    pedagogicalTitle: teacher.pedagogicalTitle ?? '',
+    lastAttestationDate: teacher.lastAttestationDate ?? '',
+    attestationNote: teacher.attestationNote ?? '',
+    disciplines: teacher.disciplines?.join(', ') ?? '',
+  };
+}
+
+function toUserForm(user) {
+  return {
+    username: user.username ?? '',
+    password: '',
+    role: user.role ?? 'TEACHER',
+    teacherId: user.teacherId ? String(user.teacherId) : '',
+  };
+}
+
 export default function AdminPage() {
   const { logout } = useAuth();
+  const teacherFormRef = useRef(null);
+  const userFormRef = useRef(null);
+  const teacherListRef = useRef(null);
+  const userListRef = useRef(null);
   const [users, setUsers] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [positions, setPositions] = useState([]);
   const [teacherCategories, setTeacherCategories] = useState([]);
   const [teacherForm, setTeacherForm] = useState(emptyTeacher);
   const [userForm, setUserForm] = useState(emptyUser);
+  const [editingTeacherId, setEditingTeacherId] = useState(null);
+  const [editingUserId, setEditingUserId] = useState(null);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const nextAttestationPreview = teacherForm.lastAttestationDate
     ? (() => {
         const [year, month, day] = teacherForm.lastAttestationDate.split('-').map(Number);
@@ -62,8 +90,9 @@ export default function AdminPage() {
   const createTeacher = async (event) => {
     event.preventDefault();
     setError('');
+    setSuccessMessage('');
     try {
-      await api.post('/teachers', {
+      const payload = {
         ...teacherForm,
         positionId: Number(teacherForm.positionId),
         categoryId: Number(teacherForm.categoryId),
@@ -72,30 +101,59 @@ export default function AdminPage() {
           .split(',')
           .map((value) => value.trim())
           .filter(Boolean),
-      });
+      };
+      if (editingTeacherId) {
+        await api.put(`/teachers/${editingTeacherId}`, payload);
+      } else {
+        await api.post('/teachers', payload);
+      }
       setTeacherForm(emptyTeacher);
+      setEditingTeacherId(null);
       await loadData();
+      setSuccessMessage(editingTeacherId ? 'Дані викладача успішно оновлено' : 'Викладача успішно створено');
+      if (editingTeacherId) {
+        requestAnimationFrame(() => {
+          teacherListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Не вдалося створити викладача');
+      setError(err.response?.data?.message || 'Не вдалося зберегти викладача');
     }
   };
 
   const createUser = async (event) => {
     event.preventDefault();
     setError('');
+    setSuccessMessage('');
     if (userForm.role === 'TEACHER' && !userForm.teacherId) {
       setError('Для користувача з роллю TEACHER потрібно обрати викладача');
       return;
     }
     try {
-      await api.post('/admin/users', {
+      const payload = {
         ...userForm,
-        teacherId: userForm.teacherId ? Number(userForm.teacherId) : null,
-      });
+        teacherId: userForm.role === 'TEACHER' && userForm.teacherId ? Number(userForm.teacherId) : null,
+      };
+      if (editingUserId) {
+        await api.put(`/admin/users/${editingUserId}`, {
+          username: payload.username,
+          role: payload.role,
+          teacherId: payload.teacherId,
+        });
+      } else {
+        await api.post('/admin/users', payload);
+      }
       setUserForm(emptyUser);
+      setEditingUserId(null);
       await loadData();
+      setSuccessMessage(editingUserId ? 'Користувача успішно оновлено' : 'Користувача успішно створено');
+      if (editingUserId) {
+        requestAnimationFrame(() => {
+          userListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Не вдалося створити користувача');
+      setError(err.response?.data?.message || 'Не вдалося зберегти користувача');
     }
   };
 
@@ -107,17 +165,93 @@ export default function AdminPage() {
     try {
       await api.put(`/admin/users/${userId}/reset-password`, { newPassword });
       await loadData();
+      setSuccessMessage('Пароль успішно змінено');
     } catch (err) {
       setError(err.response?.data?.message || 'Не вдалося змінити пароль');
     }
   };
 
   const toggleActive = async (userId) => {
+    setError('');
+    setSuccessMessage('');
     try {
       await api.put(`/admin/users/${userId}/toggle-active`);
       await loadData();
+      setSuccessMessage('Статус користувача успішно змінено');
     } catch (err) {
       setError(err.response?.data?.message || 'Не вдалося змінити статус');
+    }
+  };
+
+  const startTeacherEdit = (teacher) => {
+    setError('');
+    setSuccessMessage('');
+    setEditingTeacherId(teacher.id);
+    setTeacherForm(toTeacherForm(teacher));
+    requestAnimationFrame(() => {
+      teacherFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  const cancelTeacherEdit = () => {
+    setEditingTeacherId(null);
+    setTeacherForm(emptyTeacher);
+    requestAnimationFrame(() => {
+      teacherListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  const deleteTeacher = async (teacherId) => {
+    if (!window.confirm('Видалити цього викладача?')) {
+      return;
+    }
+    setError('');
+    setSuccessMessage('');
+    try {
+      await api.delete(`/teachers/${teacherId}`);
+      if (editingTeacherId === teacherId) {
+        cancelTeacherEdit();
+      }
+      await loadData();
+      setSuccessMessage('Викладача успішно видалено');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Не вдалося видалити викладача');
+    }
+  };
+
+  const startUserEdit = (user) => {
+    setError('');
+    setSuccessMessage('');
+    setEditingUserId(user.id);
+    setUserForm(toUserForm(user));
+    requestAnimationFrame(() => {
+      userFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  const cancelUserEdit = () => {
+    setEditingUserId(null);
+    setUserForm(emptyUser);
+    requestAnimationFrame(() => {
+      userListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  const deleteUser = async (userId) => {
+    if (!window.confirm('Видалити цього користувача?')) {
+      return;
+    }
+    setError('');
+    setSuccessMessage('');
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      if (editingUserId === userId) {
+        cancelUserEdit();
+      }
+      await loadData();
+      setSuccessMessage('Користувача успішно видалено');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Не вдалося видалити користувача');
     }
   };
 
@@ -132,13 +266,14 @@ export default function AdminPage() {
       </header>
 
       {error ? <p className="form-error">{error}</p> : null}
+      {successMessage ? <p className="form-success">{successMessage}</p> : null}
 
       <section className="admin-grid">
-        <article className="panel">
+        <article className="panel" ref={teacherFormRef}>
           <div className="panel-heading">
             <div>
               <p className="eyebrow">Викладачі</p>
-              <h2>Створити профіль викладача</h2>
+              <h2>{editingTeacherId ? 'Редагувати профіль викладача' : 'Створити профіль викладача'}</h2>
             </div>
           </div>
 
@@ -172,6 +307,7 @@ export default function AdminPage() {
                   <option value="">Не вказано</option>
                   <option value="Старший викладач">Старший викладач</option>
                   <option value="Викладач-методист">Викладач-методист</option>
+                  <option value="Методист">Методист</option>
                 </select>
               </label>
               <label>
@@ -191,15 +327,22 @@ export default function AdminPage() {
               Примітка
               <textarea value={teacherForm.attestationNote} onChange={(event) => setTeacherForm((prev) => ({ ...prev, attestationNote: event.target.value }))} rows="3" />
             </label>
-            <button type="submit" className="primary-button">Створити викладача</button>
+            <div className="form-actions">
+              {editingTeacherId ? (
+                <button type="button" className="ghost-button" onClick={cancelTeacherEdit}>Скасувати</button>
+              ) : null}
+              <button type="submit" className="primary-button">
+                {editingTeacherId ? 'Зберегти зміни' : 'Створити викладача'}
+              </button>
+            </div>
           </form>
         </article>
 
-        <article className="panel">
+        <article className="panel" ref={userFormRef}>
           <div className="panel-heading">
             <div>
               <p className="eyebrow">Облікові записи</p>
-              <h2>Створити користувача</h2>
+              <h2>{editingUserId ? 'Редагувати користувача' : 'Створити користувача'}</h2>
             </div>
           </div>
 
@@ -208,10 +351,12 @@ export default function AdminPage() {
               Username
               <input value={userForm.username} onChange={(event) => setUserForm((prev) => ({ ...prev, username: event.target.value }))} required />
             </label>
-            <label>
-              Password
-              <input type="password" value={userForm.password} onChange={(event) => setUserForm((prev) => ({ ...prev, password: event.target.value }))} required />
-            </label>
+            {!editingUserId ? (
+              <label>
+                Password
+                <input type="password" value={userForm.password} onChange={(event) => setUserForm((prev) => ({ ...prev, password: event.target.value }))} required />
+              </label>
+            ) : null}
             <label>
               Role
               <select value={userForm.role} onChange={(event) => setUserForm((prev) => ({ ...prev, role: event.target.value }))}>
@@ -233,12 +378,62 @@ export default function AdminPage() {
                 ))}
               </select>
             </label>
-            <button type="submit" className="primary-button">Створити користувача</button>
+            <div className="form-actions">
+              {editingUserId ? (
+                <button type="button" className="ghost-button" onClick={cancelUserEdit}>Скасувати</button>
+              ) : null}
+              <button type="submit" className="primary-button">
+                {editingUserId ? 'Зберегти зміни' : 'Створити користувача'}
+              </button>
+            </div>
           </form>
         </article>
       </section>
 
-      <section className="panel">
+      <section className="panel" ref={teacherListRef}>
+        <div className="panel-heading">
+          <div>
+            <p className="eyebrow">Викладачі</p>
+            <h2>Список викладачів</h2>
+          </div>
+        </div>
+
+        <div className="table-shell">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ПІБ</th>
+                <th>Посада</th>
+                <th>Категорія</th>
+                <th>Педагогічне звання</th>
+                <th>Остання атестація</th>
+                <th>Дії</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teachers.map((teacher) => (
+                <tr key={teacher.id}>
+                  <td>{teacher.fullName}</td>
+                  <td>{teacher.positionName}</td>
+                  <td>{teacher.categoryName}</td>
+                  <td>{teacher.pedagogicalTitle || '-'}</td>
+                  <td>{teacher.lastAttestationDate}</td>
+                  <td>
+                    <button type="button" className="inline-button" onClick={() => startTeacherEdit(teacher)}>
+                      <span className="action-icon" role="img" aria-label="Редагувати" title="Редагувати">✎</span>
+                    </button>
+                    <button type="button" className="inline-button" onClick={() => deleteTeacher(teacher.id)}>
+                      <span className="action-icon" role="img" aria-label="Видалити" title="Видалити">🗑</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="panel" ref={userListRef}>
         <div className="panel-heading">
           <div>
             <p className="eyebrow">Доступ</p>
@@ -266,10 +461,23 @@ export default function AdminPage() {
                   <td>{user.active ? 'Активний' : 'Заблокований'}</td>
                   <td>
                     <button type="button" className="inline-button" onClick={() => resetPassword(user.id)}>
-                      Скинути пароль
+                      <span className="action-icon" role="img" aria-label="Скинути пароль" title="Скинути пароль">🔑</span>
+                    </button>
+                    <button type="button" className="inline-button" onClick={() => startUserEdit(user)}>
+                      <span className="action-icon" role="img" aria-label="Редагувати" title="Редагувати">✎</span>
                     </button>
                     <button type="button" className="inline-button" onClick={() => toggleActive(user.id)}>
-                      {user.active ? 'Заблокувати' : 'Активувати'}
+                      <span
+                        className="action-icon"
+                        role="img"
+                        aria-label={user.active ? 'Активний користувач' : 'Заблокований користувач'}
+                        title={user.active ? 'Активний користувач' : 'Заблокований користувач'}
+                      >
+                        {user.active ? '🔓' : '🔒'}
+                      </span>
+                    </button>
+                    <button type="button" className="inline-button" onClick={() => deleteUser(user.id)}>
+                      <span className="action-icon" role="img" aria-label="Видалити" title="Видалити">🗑</span>
                     </button>
                   </td>
                 </tr>

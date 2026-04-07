@@ -47,15 +47,11 @@ public class DataBootstrapService implements CommandLineRunner {
     }
 
     private void seedPositions() {
-        if (positionRepository.count() > 0) {
-            return;
-        }
-
-        positionRepository.saveAll(List.of(
-            Position.builder().name("Викладач").build(),
-            Position.builder().name("Старший викладач").build(),
-            Position.builder().name("Методист").build()
-        ));
+        savePositionIfMissing("Викладач");
+        savePositionIfMissing("Директор");
+        savePositionIfMissing("Заступник директора");
+        savePositionIfMissing("Завідувач відділення");
+        savePositionIfMissing("Завідувач лабораторією");
     }
 
     private void seedTeacherCategories() {
@@ -85,6 +81,16 @@ public class DataBootstrapService implements CommandLineRunner {
         }
 
         teacherCategoryRepository.save(TeacherCategory.builder()
+            .name(name)
+            .build());
+    }
+
+    private void savePositionIfMissing(String name) {
+        if (positionRepository.existsByName(name)) {
+            return;
+        }
+
+        positionRepository.save(Position.builder()
             .name(name)
             .build());
     }
