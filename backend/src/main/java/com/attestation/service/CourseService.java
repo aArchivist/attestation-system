@@ -52,6 +52,28 @@ public class CourseService {
         return toResponseDTO(courseRepository.save(course));
     }
 
+    public CourseResponseDTO updateCourse(Long courseId, CourseDTO dto, Long requesterTeacherId, String requesterRole) {
+        Course course = findOrThrow(courseId);
+        boolean isAdmin = "ADMIN".equals(requesterRole);
+        boolean isOwner = requesterTeacherId != null && course.getTeacher().getId().equals(requesterTeacherId);
+        if (!isAdmin && (!isOwner || course.isConfirmed())) {
+            throw new AccessDeniedException("Неможливо редагувати підтверджений курс");
+        }
+
+        CourseCategory category = categoryRepository.findById(dto.getCategoryId())
+            .orElseThrow(() -> new EntityNotFoundException("Категорію не знайдено"));
+
+        course.setCategory(category);
+        course.setTitle(dto.getTitle());
+        course.setInstitution(dto.getInstitution());
+        course.setHours(dto.getHours());
+        course.setEctsCredits(calculateEcts(dto.getHours()));
+        course.setIssueDate(dto.getIssueDate());
+        course.setDriveUrl(dto.getDriveUrl());
+
+        return toResponseDTO(courseRepository.save(course));
+    }
+
     public CourseResponseDTO confirmCourse(Long courseId, Long userId) {
         Course course = findOrThrow(courseId);
         User user = userRepository.findById(userId)

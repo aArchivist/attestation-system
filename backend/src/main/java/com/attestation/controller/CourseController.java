@@ -58,6 +58,16 @@ public class CourseController {
         return ResponseEntity.status(201).body(courseService.addCourse(dto, user.getTeacherId()));
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('TEACHER')")
+    public CourseResponseDTO updateCourse(@PathVariable Long id, @Valid @RequestBody CourseDTO dto, Authentication auth) {
+        CurrentUser user = (CurrentUser) auth.getPrincipal();
+        if (user.getTeacherId() == null) {
+            throw new IllegalArgumentException("Обліковий запис викладача не прив'язаний до профілю викладача");
+        }
+        return courseService.updateCourse(id, dto, user.getTeacherId(), user.getRole().name());
+    }
+
     @PutMapping("/{id}/confirm")
     @PreAuthorize("hasRole('HEAD')")
     public CourseResponseDTO confirm(@PathVariable Long id, Authentication auth) {

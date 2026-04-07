@@ -160,8 +160,25 @@ a {
 }
 
 .info-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   margin-bottom: 24px;
+}
+
+.info-grid article {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.info-grid h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.info-card-wide {
+  grid-column: 1 / -1;
 }
 
 label {

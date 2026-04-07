@@ -19,11 +19,31 @@ const initialState = {
   driveUrl: '',
 };
 
-export default function CourseForm({ onSuccess, onCancel }) {
+function toFormState(course) {
+  if (!course) {
+    return initialState;
+  }
+  return {
+    title: course.title ?? '',
+    institution: course.institution ?? '',
+    issueDate: course.issueDate ?? '',
+    hours: course.hours ?? 1,
+    ectsCredits: course.ectsCredits != null ? Number(course.ectsCredits).toFixed(1) : '0.0',
+    categoryId: course.categoryId ? String(course.categoryId) : '',
+    driveUrl: course.driveUrl ?? '',
+  };
+}
+
+export default function CourseForm({ onSuccess, onCancel, initialCourse = null }) {
   const [form, setForm] = useState(initialState);
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const isEditing = Boolean(initialCourse?.id);
+
+  useEffect(() => {
+    setForm(toFormState(initialCourse));
+  }, [initialCourse]);
 
   useEffect(() => {
     api.get('/admin/categories')
@@ -51,12 +71,17 @@ export default function CourseForm({ onSuccess, onCancel }) {
     setError('');
 
     try {
-      await api.post('/courses', {
+      const payload = {
         ...form,
         hours: Number(form.hours),
         categoryId: Number(form.categoryId),
         ectsCredits: form.ectsCredits ? Number(form.ectsCredits) : null,
-      });
+      };
+      if (isEditing) {
+        await api.put(`/courses/${initialCourse.id}`, payload);
+      } else {
+        await api.post('/courses', payload);
+      }
       setForm(initialState);
       onSuccess();
     } catch (err) {
@@ -112,7 +137,7 @@ export default function CourseForm({ onSuccess, onCancel }) {
       <div className="form-actions">
         <button type="button" className="ghost-button" onClick={onCancel}>Скасувати</button>
         <button type="submit" className="primary-button" disabled={loading}>
-          {loading ? 'Збереження...' : 'Додати курс'}
+          {loading ? 'Збереження...' : isEditing ? 'Зберегти зміни' : 'Додати курс'}
         </button>
       </div>
     </form>

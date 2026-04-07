@@ -11,6 +11,7 @@ export default function TeacherProfilePage() {
   const [courses, setCourses] = useState([]);
   const [selectedUrl, setSelectedUrl] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [editingCourse, setEditingCourse] = useState(null);
   const [error, setError] = useState('');
 
   const loadData = async () => {
@@ -39,6 +40,18 @@ export default function TeacherProfilePage() {
     }
   };
 
+  const startCourseEdit = (course) => {
+    setError('');
+    if (course.confirmed) {
+      setError('Підтверджений курс не можна редагувати');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setSelectedUrl('');
+    setEditingCourse(course);
+    setShowForm(true);
+  };
+
   const confirmedHours = profile?.confirmedHours ?? 0;
   const totalHours = profile?.totalHours ?? 0;
 
@@ -58,19 +71,32 @@ export default function TeacherProfilePage() {
 
       <section className="panel info-grid">
         <article>
-          <p className="eyebrow">Атестація</p>
+          <p className="eyebrow">Наступна атестація</p>
           <h3>{profile?.nextAttestationDate || '...'}</h3>
-          <p>Наступна дата атестації</p>
+        </article>
+        <article>
+          <p className="eyebrow">Остання атестація</p>
+          <h3>{profile?.lastAttestationDate || '...'}</h3>
         </article>
         <article>
           <p className="eyebrow">Категорія</p>
           <h3>{profile?.categoryName || '...'}</h3>
-          <p>{profile?.positionName || '...'}</p>
         </article>
         <article>
+          <p className="eyebrow">Посада</p>
+          <h3>{profile?.positionName || '...'}</h3>
+        </article>
+        <article>
+          <p className="eyebrow">Педагогічне звання</p>
+          <h3>{profile?.pedagogicalTitle || 'Не вказано'}</h3>
+        </article>
+        <article>
+          <p className="eyebrow">Дисципліни</p>
+          <h3>{profile?.disciplines?.length ? profile.disciplines.join(', ') : 'Не вказано'}</h3>
+        </article>
+        <article className="info-card-wide">
           <p className="eyebrow">Примітка</p>
           <h3>{profile?.attestationNote || 'Без приміток'}</h3>
-          <p>Коментар до графіку атестації</p>
         </article>
       </section>
 
@@ -80,7 +106,19 @@ export default function TeacherProfilePage() {
             <p className="eyebrow">Підвищення кваліфікації</p>
             <h2>Мої курси</h2>
           </div>
-          <button type="button" className="primary-button" onClick={() => setShowForm(true)}>Додати курс</button>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => {
+              setError('');
+              setEditingCourse(null);
+              setShowForm(true);
+            }}
+            title="Додати курс"
+            aria-label="Додати курс"
+          >
+            <span className="action-icon">➕</span>
+          </button>
         </div>
 
         <div className="table-shell">
@@ -94,7 +132,8 @@ export default function TeacherProfilePage() {
                 <th>Категорія</th>
                 <th>Статус</th>
                 <th>Сертифікат</th>
-                <th>Видалити</th>
+                <th>Дії</th>
+                <th>Видалення</th>
               </tr>
             </thead>
             <tbody>
@@ -107,8 +146,25 @@ export default function TeacherProfilePage() {
                   <td>{course.categoryName}</td>
                   <td>{course.confirmed ? 'Підтверджено' : 'Очікує'}</td>
                   <td>
-                    <button type="button" className="inline-button" onClick={() => setSelectedUrl(course.driveUrl)}>
-                      Переглянути
+                    <button
+                      type="button"
+                      className="inline-button"
+                      onClick={() => setSelectedUrl(course.driveUrl)}
+                      title="Переглянути сертифікат"
+                      aria-label="Переглянути сертифікат"
+                    >
+                      <span className="action-icon">👁</span>
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="inline-button"
+                      onClick={() => startCourseEdit(course)}
+                      title={course.confirmed ? 'Підтверджений курс не можна редагувати' : 'Редагувати курс'}
+                      aria-label={course.confirmed ? 'Підтверджений курс не можна редагувати' : 'Редагувати курс'}
+                    >
+                      <span className="action-icon">✎</span>
                     </button>
                   </td>
                   <td>
@@ -117,8 +173,10 @@ export default function TeacherProfilePage() {
                       className="inline-button danger-link"
                       disabled={course.confirmed}
                       onClick={() => deleteCourse(course.id)}
+                      title={course.confirmed ? 'Підтверджений курс не можна видаляти' : 'Видалити курс'}
+                      aria-label={course.confirmed ? 'Підтверджений курс не можна видаляти' : 'Видалити курс'}
                     >
-                      Видалити
+                      <span className="action-icon">🗑</span>
                     </button>
                   </td>
                 </tr>
@@ -133,14 +191,19 @@ export default function TeacherProfilePage() {
           <div className="modal-card panel">
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">Новий запис</p>
-                <h3>Додати курс</h3>
+                <p className="eyebrow">{editingCourse ? 'Редагування' : 'Новий запис'}</p>
+                <h3>{editingCourse ? 'Редагувати курс' : 'Додати курс'}</h3>
               </div>
             </div>
             <CourseForm
-              onCancel={() => setShowForm(false)}
+              initialCourse={editingCourse}
+              onCancel={() => {
+                setShowForm(false);
+                setEditingCourse(null);
+              }}
               onSuccess={() => {
                 setShowForm(false);
+                setEditingCourse(null);
                 loadData();
               }}
             />
