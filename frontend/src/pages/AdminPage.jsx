@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import api from '../api/axios';
+import ActionIcon from '../components/ActionIcon';
 import { useAuth } from '../context/AuthContext';
 
 const emptyTeacher = {
@@ -419,11 +420,11 @@ export default function AdminPage() {
                   <td>{teacher.pedagogicalTitle || '-'}</td>
                   <td>{teacher.lastAttestationDate}</td>
                   <td>
-                    <button type="button" className="inline-button" onClick={() => startTeacherEdit(teacher)}>
-                      <span className="action-icon" role="img" aria-label="Редагувати" title="Редагувати">✎</span>
+                    <button type="button" className="inline-button" onClick={() => startTeacherEdit(teacher)} title="Редагувати" aria-label="Редагувати">
+                      <ActionIcon name="edit" />
                     </button>
-                    <button type="button" className="inline-button" onClick={() => deleteTeacher(teacher.id)}>
-                      <span className="action-icon" role="img" aria-label="Видалити" title="Видалити">🗑</span>
+                    <button type="button" className="inline-button" onClick={() => deleteTeacher(teacher.id)} title="Видалити" aria-label="Видалити">
+                      <ActionIcon name="delete" />
                     </button>
                   </td>
                 </tr>
@@ -460,24 +461,23 @@ export default function AdminPage() {
                   <td>{user.teacherId || '-'}</td>
                   <td>{user.active ? 'Активний' : 'Заблокований'}</td>
                   <td>
-                    <button type="button" className="inline-button" onClick={() => resetPassword(user.id)}>
-                      <span className="action-icon" role="img" aria-label="Скинути пароль" title="Скинути пароль">🔑</span>
+                    <button type="button" className="inline-button" onClick={() => resetPassword(user.id)} title="Скинути пароль" aria-label="Скинути пароль">
+                      <ActionIcon name="key" />
                     </button>
-                    <button type="button" className="inline-button" onClick={() => startUserEdit(user)}>
-                      <span className="action-icon" role="img" aria-label="Редагувати" title="Редагувати">✎</span>
+                    <button type="button" className="inline-button" onClick={() => startUserEdit(user)} title="Редагувати" aria-label="Редагувати">
+                      <ActionIcon name="edit" />
                     </button>
-                    <button type="button" className="inline-button" onClick={() => toggleActive(user.id)}>
-                      <span
-                        className="action-icon"
-                        role="img"
-                        aria-label={user.active ? 'Активний користувач' : 'Заблокований користувач'}
-                        title={user.active ? 'Активний користувач' : 'Заблокований користувач'}
-                      >
-                        {user.active ? '🔓' : '🔒'}
-                      </span>
+                    <button
+                      type="button"
+                      className="inline-button"
+                      onClick={() => toggleActive(user.id)}
+                      title={user.active ? 'Активний користувач' : 'Заблокований користувач'}
+                      aria-label={user.active ? 'Активний користувач' : 'Заблокований користувач'}
+                    >
+                      <ActionIcon name={user.active ? 'unlock' : 'lock'} />
                     </button>
-                    <button type="button" className="inline-button" onClick={() => deleteUser(user.id)}>
-                      <span className="action-icon" role="img" aria-label="Видалити" title="Видалити">🗑</span>
+                    <button type="button" className="inline-button" onClick={() => deleteUser(user.id)} title="Видалити" aria-label="Видалити">
+                      <ActionIcon name="delete" />
                     </button>
                   </td>
                 </tr>

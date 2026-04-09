@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
+import ActionIcon from '../components/ActionIcon';
 import CourseForm from '../components/CourseForm';
 import DrivePreview from '../components/DrivePreview';
 import HoursCounter from '../components/HoursCounter';
@@ -117,7 +118,7 @@ export default function TeacherProfilePage() {
             title="Додати курс"
             aria-label="Додати курс"
           >
-            <span className="action-icon add-icon">+</span>
+            <ActionIcon name="add" className="add-icon" />
           </button>
         </div>
 
@@ -153,7 +154,7 @@ export default function TeacherProfilePage() {
                       title="Переглянути сертифікат"
                       aria-label="Переглянути сертифікат"
                     >
-                      <span className="action-icon">👁</span>
+                      <ActionIcon name="view" />
                     </button>
                   </td>
                   <td className="action-cell">
@@ -164,7 +165,7 @@ export default function TeacherProfilePage() {
                       title={course.confirmed ? 'Підтверджений курс не можна редагувати' : 'Редагувати курс'}
                       aria-label={course.confirmed ? 'Підтверджений курс не можна редагувати' : 'Редагувати курс'}
                     >
-                      <span className="action-icon">✎</span>
+                      <ActionIcon name="edit" />
                     </button>
                   </td>
                   <td className="action-cell">
@@ -176,7 +177,7 @@ export default function TeacherProfilePage() {
                       title={course.confirmed ? 'Підтверджений курс не можна видаляти' : 'Видалити курс'}
                       aria-label={course.confirmed ? 'Підтверджений курс не можна видаляти' : 'Видалити курс'}
                     >
-                      <span className="action-icon">🗑</span>
+                      <ActionIcon name="delete" />
                     </button>
                   </td>
                 </tr>
