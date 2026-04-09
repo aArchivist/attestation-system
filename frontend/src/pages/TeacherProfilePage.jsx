@@ -108,7 +108,7 @@ export default function TeacherProfilePage() {
           </div>
           <button
             type="button"
-            className="primary-button"
+            className="primary-button icon-button add-course-button"
             onClick={() => {
               setError('');
               setEditingCourse(null);
@@ -117,7 +117,7 @@ export default function TeacherProfilePage() {
             title="Додати курс"
             aria-label="Додати курс"
           >
-            <span className="action-icon">➕</span>
+            <span className="action-icon add-icon">+</span>
           </button>
         </div>
 
@@ -131,9 +131,9 @@ export default function TeacherProfilePage() {
                 <th>Години</th>
                 <th>Категорія</th>
                 <th>Статус</th>
-                <th>Сертифікат</th>
-                <th>Дії</th>
-                <th>Видалення</th>
+                <th className="action-column">Сертифікат</th>
+                <th className="action-column">Дії</th>
+                <th className="action-column">Видалення</th>
               </tr>
             </thead>
             <tbody>
@@ -145,10 +145,10 @@ export default function TeacherProfilePage() {
                   <td>{course.hours}</td>
                   <td>{course.categoryName}</td>
                   <td>{course.confirmed ? 'Підтверджено' : 'Очікує'}</td>
-                  <td>
+                  <td className="action-cell">
                     <button
                       type="button"
-                      className="inline-button"
+                      className="inline-button icon-button"
                       onClick={() => setSelectedUrl(course.driveUrl)}
                       title="Переглянути сертифікат"
                       aria-label="Переглянути сертифікат"
@@ -156,10 +156,10 @@ export default function TeacherProfilePage() {
                       <span className="action-icon">👁</span>
                     </button>
                   </td>
-                  <td>
+                  <td className="action-cell">
                     <button
                       type="button"
-                      className="inline-button"
+                      className="inline-button icon-button"
                       onClick={() => startCourseEdit(course)}
                       title={course.confirmed ? 'Підтверджений курс не можна редагувати' : 'Редагувати курс'}
                       aria-label={course.confirmed ? 'Підтверджений курс не можна редагувати' : 'Редагувати курс'}
@@ -167,10 +167,10 @@ export default function TeacherProfilePage() {
                       <span className="action-icon">✎</span>
                     </button>
                   </td>
-                  <td>
+                  <td className="action-cell">
                     <button
                       type="button"
-                      className="inline-button danger-link"
+                      className="inline-button icon-button danger-link"
                       disabled={course.confirmed}
                       onClick={() => deleteCourse(course.id)}
                       title={course.confirmed ? 'Підтверджений курс не можна видаляти' : 'Видалити курс'}
