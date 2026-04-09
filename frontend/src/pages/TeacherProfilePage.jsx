@@ -150,9 +150,10 @@ export default function TeacherProfilePage() {
                     <button
                       type="button"
                       className="inline-button icon-button"
+                      disabled={!course.driveUrl}
                       onClick={() => setSelectedUrl(course.driveUrl)}
-                      title="Переглянути сертифікат"
-                      aria-label="Переглянути сертифікат"
+                      title={course.driveUrl ? 'Переглянути сертифікат' : 'Сертифікат не додано'}
+                      aria-label={course.driveUrl ? 'Переглянути сертифікат' : 'Сертифікат не додано'}
                     >
                       <ActionIcon name="view" />
                     </button>

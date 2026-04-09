@@ -20,8 +20,12 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    if (!window.confirm('Ви дійсно хочете вийти з акаунту?')) {
+      return false;
+    }
     localStorage.clear();
     setAuth({ token: null, role: null, teacherId: null });
+    return true;
   };
 
   return <AuthContext.Provider value={{ ...auth, login, logout }}>{children}</AuthContext.Provider>;
