@@ -308,7 +308,6 @@ export default function AdminPage() {
                   <option value="">Не вказано</option>
                   <option value="Старший викладач">Старший викладач</option>
                   <option value="Викладач-методист">Викладач-методист</option>
-                  <option value="Методист">Методист</option>
                 </select>
               </label>
               <label>
